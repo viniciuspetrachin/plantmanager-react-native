@@ -10,8 +10,8 @@ import {
   Dimensions
 } from 'react-native';
 
-import colors from '../../styles/colors';
-import fonts from '../../styles/fonts';
+import colors from '../styles/colors';
+import fonts from '../styles/fonts';
 
 import { Feather } from '@expo/vector-icons'
 
