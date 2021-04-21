@@ -6,9 +6,7 @@ import {
   Jost_600SemiBold,
   Jost_400Regular
 } from '@expo-google-fonts/jost'
-
-import { Welcome } from './src/pages/Welcome';
-import { UserIdentification } from './src/pages/UserIdentification';
+import Routes from './src/routes';
 
 export default function App() {
 
@@ -20,6 +18,6 @@ export default function App() {
   if (!fontsLoaded) return <AppLoading />
 
   return (
-    <UserIdentification />
+    <Routes />
   )
 }

@@ -16,8 +16,16 @@ import fonts from '../styles/fonts';
 import { Feather } from '@expo/vector-icons'
 
 import wateringImg from '../assets/watering.png'
+import { useNavigation } from '@react-navigation/core';
 
 export function Welcome() {
+
+  const navigation = useNavigation()
+
+  function handleStart() {
+    navigation.navigate('UserIdentification')
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.wrapper}>
@@ -39,7 +47,10 @@ export function Welcome() {
           sempre que precisar.
         </Text>
 
-        <TouchableOpacity style={styles.button}>
+        <TouchableOpacity
+          style={styles.button}
+          onPress={handleStart}
+        >
 
           <Feather name='chevron-right' style={styles.chevronRight} />
 
@@ -87,7 +98,7 @@ const styles = StyleSheet.create({
     height: Dimensions.get('window').width * 0.7
   },
   wrapper: {
-    flex:1,
+    flex: 1,
     paddingHorizontal: 20,
     alignItems: 'center',
     justifyContent: 'space-around'
