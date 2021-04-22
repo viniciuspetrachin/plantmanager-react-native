@@ -1,197 +1,190 @@
-import React, {
-  useEffect,
-  useState
-} from 'react';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, FlatList, StyleSheet, Text, View } from 'react-native';
 
-import {
-  ActivityIndicator,
-  FlatList,
-  StyleSheet,
-  Text,
-  View
-} from 'react-native';
-
-import colors from '../styles/colors';
-import fonts from '../styles/fonts';
-import { getStatusBarHeight } from 'react-native-iphone-x-helper'
-
+import { ButtonEnvironment } from '../components/ButtonEnvironment'
 import { Header } from '../components/Header';
-import { ButtonEnviroment } from '../components/ButtonEnviroment';
+import { Load } from '../components/Load';
 import { PlantCardPrimary } from '../components/PlantCardPrimary';
 
 import api from '../services/api';
-import { Load } from '../components/Load';
+import colors from '../styles/colors';
+import fonts from '../styles/fonts';
 
-interface EnviromentProps {
-  key: string;
-  title: string;
+interface EnvironmentProps {
+   key: string;
+   title: string;
 }
-interface PlantsProps {
-  id: string;
-  name: string;
-  about: string;
-  water_tips: string;
-  photo: string;
-  environments: [string];
-  frequency: {
-    times: number;
-    repeat_every: string
-  }
+
+interface PlantProps {
+   id: string;
+   name: string;
+   about: string;
+   water_tips: string;
+   photo: string;
+   environments: [string];
+   frequency: {
+      times: number;
+      repeat_every: string;
+   }
 }
 
 export function PlantSelect() {
+   const [environments, setEnvironments] = useState<EnvironmentProps[]>([]);
+   const [plants, setPlants] = useState<PlantProps[]>([]);
+   const [filteredPlants, setFilteredPlants] = useState<PlantProps[]>([]);
+   const [environmentSelected, setEnvironmentSelected] = useState('all');
+   const [loading, setLoading] = useState(true);
 
-  const [environments, setEnvironments] = useState<EnviromentProps[]>([])
-  const [plants, setPlants] = useState<PlantsProps[]>([])
-  const [filteredPlants, setFilteredPlants] = useState<PlantsProps[]>([])
-  const [currentEnvironment, setCurrentEnvironment] = useState('all')
-  const [loading, setLoading] = useState(true)
-  const [page, setPage] = useState(1)
-  const [loadMore, setLoadMore] = useState(false)
-  const [loadedAll, setLoadedAll] = useState(false)
+   const [page, setPage] = useState(1);
+   const [loadingMore, setLoadingMore] = useState(false);
+   const [loadedAll, setLoadedAll] = useState(false);
 
-  useEffect(() => {
-    fetchEnvironment()
-  }, [])
-  useEffect(() => {
-    fetchPlants()
-  }, [])
+   function handleEnvironmentSelected(environment: string) {
+      setEnvironmentSelected(environment);
 
-  async function fetchEnvironment() {
-    const { data } = await api.get('plants_environments?_sort=title&_order=asc')
-    setEnvironments([
-      {
-        key: 'all',
-        title: 'Todos'
-      },
-      ...data]
-    )
-    setLoading(false)
-  }
-  async function fetchPlants() {
-    const { data } = await api
-      .get(`plants?_sort=name&_order=asc&page=${page}&limit=8`)
+      if (environment === 'all')
+         return setFilteredPlants(plants);
 
-    if (!data) return setLoading(true)
+      const filtered = plants.filter(plant =>
+         plant.environments.includes(environment)
+      )
 
-    if (page > 1) {
-      setPlants(oldValue => [...oldValue, ...data])
-      setFilteredPlants(oldValue => [...oldValue, ...data])
-    } else {
-      setPlants(data)
-      setFilteredPlants(data)
-    }
+      setFilteredPlants(filtered);
+   }
 
-    setLoading(false)
-    setLoadMore(false)
+   async function fetchPlants() {
+      const { data } = await api.get(`plants?_sort=name&_order=asc&_page=${page}&_limit=8`);
 
-  }
+      if (!data)
+         return setLoading(true);
 
-  function handleFetchMore(distance: number) {
-    if (distance < 1) return
+      if (page > 1) {
+         setPlants(oldValue => [...oldValue, ...data])
+         setFilteredPlants(oldValue => [...oldValue, ...data])
+      } else {
+         setPlants(data);
+         setFilteredPlants(data);
+      }
 
-    setLoadMore(true)
-    setPage(oldValue => oldValue + 1)
-    fetchPlants()
-  }
+      setLoading(false);
+      setLoadingMore(false);
+   }
 
-  function handleEnviromentSelected(key: string) {
+   function handleFetchMore(distance: number) {
+      if (distance < 1)
+         return;
 
-    setCurrentEnvironment(key)
+      setLoadingMore(true);
+      setPage(oldValue => oldValue + 1);
+      fetchPlants()
+   }
 
-    if (key === 'all') return setFilteredPlants(plants)
+   useEffect(() => {
+      async function fetchEnvironment() {
+         const { data } = await api
+            .get('plants_environments?_sort=title&_order=asc');
 
-    const filtered = plants.filter(plant =>
-      plant.environments.includes(key)
-    )
-    setFilteredPlants(filtered)
+         setEnvironments([
+            {
+               key: 'all',
+               title: 'Todos'
+            },
+            ...data
+         ]);
+      }
 
-  }
+      fetchEnvironment();
+   }, [])
 
-  if (loading) return <Load />
+   useEffect(() => {
+      fetchPlants();
+   }, [])
 
-  return (
-    <View style={styles.container}>
+   if (loading)
+      return <Load />
 
-      <View style={styles.header}>
-        <Header />
-        <Text style={styles.title}>
-          Em qual ambiente
-      </Text>
-        <Text style={styles.subtitle}>
-          você quer colocar sua planta?
-      </Text>
+   return (
+      <View style={styles.container}>
+         <View style={styles.header}>
+            <Header />
 
-        <View>
+            <Text style={styles.title}>
+               Em qual ambiente
+        </Text>
+            <Text style={styles.subtitle}>
+               você quer colocar sua planta?
+        </Text>
+         </View>
 
-          <FlatList
-            data={environments}
-            renderItem={({ item, index }) =>
-              <ButtonEnviroment
-                title={item.title}
-                active={item.key === currentEnvironment}
-                onPress={() => handleEnviromentSelected(item.key)}
-              />
-            }
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.enviromentList}
-          />
+         <View>
+            <FlatList
+               data={environments}
+               renderItem={({ item }) => (
+                  <ButtonEnvironment
+                     title={item.title}
+                     active={item.key === environmentSelected}
+                     onPress={() => handleEnvironmentSelected(item.key)}
+                  />
+               )}
+               horizontal
+               showsHorizontalScrollIndicator={false}
+               contentContainerStyle={styles.environmentList}
+               ListHeaderComponent={<View />}
+               ListHeaderComponentStyle={{ marginRight: 32 }}
+            />
+         </View>
 
-        </View>
-
+         <View style={styles.plants}>
+            <FlatList
+               data={filteredPlants}
+               renderItem={({ item }) => (
+                  <PlantCardPrimary data={item} />
+               )}
+               showsVerticalScrollIndicator={false}
+               numColumns={2}
+               onEndReachedThreshold={0.1}
+               onEndReached={({ distanceFromEnd }) => handleFetchMore(distanceFromEnd)}
+               ListFooterComponent={
+                  loadingMore
+                     ? <ActivityIndicator color={colors.green} />
+                     : <></>
+               }
+            />
+         </View>
       </View>
-
-      <View style={styles.plants}>
-        <FlatList
-          data={plants}
-          renderItem={({ item }) => <PlantCardPrimary data={item} />}
-          showsVerticalScrollIndicator={false}
-          numColumns={2}
-          onEndReachedThreshold={0.1}
-          onEndReached={({ distanceFromEnd }) => handleFetchMore(distanceFromEnd)}
-          ListFooterComponent={
-            loadMore ?
-              <ActivityIndicator color={colors.green} />
-              : <></>
-          }
-        />
-      </View>
-
-    </View>
-  );
+   )
 }
+
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-    marginTop: getStatusBarHeight()
-  },
-  title: {
-    fontSize: 17,
-    color: colors.heading,
-    fontFamily: fonts.heading,
-    lineHeight: 20
-  },
-  subtitle: {
-    fontSize: 17,
-    color: colors.heading,
-    fontFamily: fonts.text,
-    lineHeight: 20
-  },
-  header: {
-    paddingHorizontal: 30
-  },
-  enviromentList: {
-    height: 40,
-    justifyContent: 'center',
-    paddingBottom: 5,
-    paddingHorizontal: 5,
-    marginVertical: 32
-  },
-  plants: {
-    flex: 1,
-    paddingHorizontal: 32,
-    justifyContent: 'center'
-  }
+   container: {
+      flex: 1,
+      backgroundColor: colors.background
+   },
+   header: {
+      paddingHorizontal: 30
+   },
+   title: {
+      fontSize: 17,
+      color: colors.heading,
+      fontFamily: fonts.heading,
+      lineHeight: 20,
+      marginTop: 15
+   },
+   subtitle: {
+      fontFamily: fonts.text,
+      fontSize: 17,
+      lineHeight: 20,
+      color: colors.heading
+   },
+   environmentList: {
+      height: 40,
+      justifyContent: 'center',
+      paddingBottom: 5,
+      marginVertical: 32
+   },
+   plants: {
+      flex: 1,
+      paddingHorizontal: 32,
+      justifyContent: 'center'
+   }
 })
