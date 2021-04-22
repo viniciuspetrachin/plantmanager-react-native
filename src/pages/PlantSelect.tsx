@@ -4,6 +4,7 @@ import React, {
 } from 'react';
 
 import {
+  ActivityIndicator,
   FlatList,
   StyleSheet,
   Text,
@@ -17,8 +18,6 @@ import { getStatusBarHeight } from 'react-native-iphone-x-helper'
 import { Header } from '../components/Header';
 import { ButtonEnviroment } from '../components/ButtonEnviroment';
 import { PlantCardPrimary } from '../components/PlantCardPrimary';
-
-import { SvgFromUri } from 'react-native-svg'
 
 import api from '../services/api';
 import { Load } from '../components/Load';
@@ -47,6 +46,9 @@ export function PlantSelect() {
   const [filteredPlants, setFilteredPlants] = useState<PlantsProps[]>([])
   const [currentEnvironment, setCurrentEnvironment] = useState('all')
   const [loading, setLoading] = useState(true)
+  const [page, setPage] = useState(1)
+  const [loadMore, setLoadMore] = useState(false)
+  const [loadedAll, setLoadedAll] = useState(false)
 
   useEffect(() => {
     fetchEnvironment()
@@ -67,24 +69,46 @@ export function PlantSelect() {
     setLoading(false)
   }
   async function fetchPlants() {
-    const { data } = await api.get('plants?_sort=name&_order=asc')
-    setPlants(data)
+    const { data } = await api
+      .get(`plants?_sort=name&_order=asc&page=${page}&limit=8`)
+
+    if (!data) return setLoading(true)
+
+    if (page > 1) {
+      setPlants(oldValue => [...oldValue, ...data])
+      setFilteredPlants(oldValue => [...oldValue, ...data])
+    } else {
+      setPlants(data)
+      setFilteredPlants(data)
+    }
+
+    setLoading(false)
+    setLoadMore(false)
+
   }
 
-  function handleEnviromentSelected(key: string){
-    
+  function handleFetchMore(distance: number) {
+    if (distance < 1) return
+
+    setLoadMore(true)
+    setPage(oldValue => oldValue + 1)
+    fetchPlants()
+  }
+
+  function handleEnviromentSelected(key: string) {
+
     setCurrentEnvironment(key)
 
-    if(key === 'all') return setFilteredPlants(plants)
+    if (key === 'all') return setFilteredPlants(plants)
 
-    const filtered = plants.filter(plant => 
-        plant.environments.includes(key)
-    ) 
+    const filtered = plants.filter(plant =>
+      plant.environments.includes(key)
+    )
     setFilteredPlants(filtered)
 
   }
 
-  if(loading) return <Load />
+  if (loading) return <Load />
 
   return (
     <View style={styles.container}>
@@ -120,10 +144,17 @@ export function PlantSelect() {
 
       <View style={styles.plants}>
         <FlatList
-          data={!filteredPlants[1] ? plants : filteredPlants}
+          data={plants}
           renderItem={({ item }) => <PlantCardPrimary data={item} />}
           showsVerticalScrollIndicator={false}
           numColumns={2}
+          onEndReachedThreshold={0.1}
+          onEndReached={({ distanceFromEnd }) => handleFetchMore(distanceFromEnd)}
+          ListFooterComponent={
+            loadMore ?
+              <ActivityIndicator color={colors.green} />
+              : <></>
+          }
         />
       </View>
 
