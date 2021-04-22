@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import {
+  Alert,
   Dimensions,
   Keyboard,
   KeyboardAvoidingView,
@@ -27,7 +28,11 @@ export function UserIdentification() {
   const navigation = useNavigation()
 
   function handleSubmit() {
-    navigation.navigate('Confirmation')
+
+    if(!/^[a-zA-Z ]{2,30}$/.test(name))
+      return Alert.alert('Opss! 😨', 'Tem certeza de que você informou um nome?🤔')
+
+   navigation.navigate('Confirmation')
   }
 
   return (
