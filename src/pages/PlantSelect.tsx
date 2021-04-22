@@ -21,6 +21,7 @@ import { PlantCardPrimary } from '../components/PlantCardPrimary';
 import { SvgFromUri } from 'react-native-svg'
 
 import api from '../services/api';
+import { Load } from '../components/Load';
 
 interface EnviromentProps {
   key: string;
@@ -45,6 +46,7 @@ export function PlantSelect() {
   const [plants, setPlants] = useState<PlantsProps[]>([])
   const [filteredPlants, setFilteredPlants] = useState<PlantsProps[]>([])
   const [currentEnvironment, setCurrentEnvironment] = useState('all')
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     fetchEnvironment()
@@ -62,6 +64,7 @@ export function PlantSelect() {
       },
       ...data]
     )
+    setLoading(false)
   }
   async function fetchPlants() {
     const { data } = await api.get('plants?_sort=name&_order=asc')
@@ -80,6 +83,8 @@ export function PlantSelect() {
     setFilteredPlants(filtered)
 
   }
+
+  if(loading) return <Load />
 
   return (
     <View style={styles.container}>
