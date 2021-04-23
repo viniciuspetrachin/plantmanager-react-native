@@ -1,5 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, StyleSheet, Text, View } from 'react-native';
+import {
+   ActivityIndicator,
+   FlatList,
+   StyleSheet,
+   Text,
+   View
+} from 'react-native';
+
+import { useNavigation } from '@react-navigation/native';
 
 import { ButtonEnvironment } from '../components/ButtonEnvironment'
 import { Header } from '../components/Header';
@@ -29,6 +37,7 @@ interface PlantProps {
 }
 
 export function PlantSelect() {
+
    const [environments, setEnvironments] = useState<EnvironmentProps[]>([]);
    const [plants, setPlants] = useState<PlantProps[]>([]);
    const [filteredPlants, setFilteredPlants] = useState<PlantProps[]>([]);
@@ -38,6 +47,29 @@ export function PlantSelect() {
    const [page, setPage] = useState(1);
    const [loadingMore, setLoadingMore] = useState(false);
    const [loadedAll, setLoadedAll] = useState(false);
+
+   const { navigate } = useNavigation()
+
+   useEffect(() => {
+      async function fetchEnvironment() {
+         const { data } = await api
+            .get('plants_environments?_sort=title&_order=asc');
+
+         setEnvironments([
+            {
+               key: 'all',
+               title: 'Todos'
+            },
+            ...data
+         ]);
+      }
+
+      fetchEnvironment();
+   }, [])
+
+   useEffect(() => {
+      fetchPlants();
+   }, [])
 
    function handleEnvironmentSelected(environment: string) {
       setEnvironmentSelected(environment);
@@ -79,26 +111,9 @@ export function PlantSelect() {
       fetchPlants()
    }
 
-   useEffect(() => {
-      async function fetchEnvironment() {
-         const { data } = await api
-            .get('plants_environments?_sort=title&_order=asc');
-
-         setEnvironments([
-            {
-               key: 'all',
-               title: 'Todos'
-            },
-            ...data
-         ]);
-      }
-
-      fetchEnvironment();
-   }, [])
-
-   useEffect(() => {
-      fetchPlants();
-   }, [])
+   function handlePlantSelect(plant: PlantProps) {
+      navigate('PlantSave', { plant })
+   }
 
    if (loading)
       return <Load />
@@ -138,7 +153,10 @@ export function PlantSelect() {
             <FlatList
                data={filteredPlants}
                renderItem={({ item }) => (
-                  <PlantCardPrimary data={item} />
+                  <PlantCardPrimary
+                     data={item}
+                     onPress={() => handlePlantSelect(item)}
+                  />
                )}
                showsVerticalScrollIndicator={false}
                numColumns={2}
