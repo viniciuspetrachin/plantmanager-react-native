@@ -34,6 +34,7 @@ The project aims to facilitate the management of your plants. Remembering you wh
 - [x] Node.js
 - [x] Npm
 - [x] Expo
+- [x] JSON-SERVER
 
 ## 🚀 To execute the project
 
@@ -44,5 +45,8 @@ $ git clone https://github.com/viniciuspetrachin/plantmanager-react-native.git
 & cd plantmanager-react-native
 $ yarn install
 $ expo start
+# IN ANOTHER BASH
+$ cd plantmanager-react-native && json-server ./src/services/server.json --host 192.168.15.4 --port 3333 --delay 815
+# AFTER THAT RUN EXPO IN YOUR DEVICE
 ```
-
+You need JSON Server to be able to emulate the database.
